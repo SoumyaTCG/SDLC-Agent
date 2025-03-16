@@ -1,31 +1,58 @@
 import streamlit as st
-from Nodes import agent
+from SDLC_Agent.Common_Utility.LLM import GroqLLM
+from SDLC_Agent.Graph.builder import GraphBuilder
+from SDLC_Agent.UI.load_ui import LoadStreamlitUI
+from SDLC_Agent.UI.display_results import DisplayResultStreamlit
 
-st.title("SDLC AI Agent - Requirement Gathering")
+def load_langgraph_agenticai_app():
+    """
+    Loads and runs the SDLC AgenticAI application using Streamlit UI.
+    Handles user input, configures the LLM, sets up the graph, and displays output.
+    """
 
-# User input for requirements
-agent.state.requirement = st.text_area("Describe the requirements in detail:", "")
+    # Load UI to capture user input
+    ui = LoadStreamlitUI()
+    user_input = ui.load_streamlit_ui()
 
-if st.button("Generate User Stories"):
-    if agent.state.requirement.strip():
-        agent.run("generate")
-        st.session_state['user_stories'] = agent.state.user_stories
+    if not user_input:
+        st.error("Error: Failed to load user input from the UI.")
+        return
+
+    # Capture user message input
+    if st.session_state.IsFetchButtonClicked:
+        user_message = st.session_state.timeframe
     else:
-        st.error("Please provide detailed requirements.")
+        user_message = st.chat_input("Enter your message:")
 
-# Display generated user stories
-if 'user_stories' in st.session_state:
-    st.header("Generated User Stories")
-    for i, story in enumerate(st.session_state['user_stories']):
-        st.write(f"{i + 1}. {story}")
+    if user_message:
+        try:
+            # Configure LLM
+            llm_config = GroqLLM(user_controls_input=user_input)
+            model = llm_config.get_llm_model()
 
-# Feedback and refinement
-agent.state.feedback = st.text_area("Provide feedback or suggest changes:", "")
+            if not model:
+                st.error("Error: LLM model could not be initialized.")
+                return
 
-if st.button("Refine User Stories"):
-    if agent.state.feedback.strip():
-        agent.run("refine")
-        st.session_state['user_stories'] = agent.state.user_stories
-        st.success("User stories refined based on feedback.")
-    else:
-        st.error("Please provide feedback.")
+            # Initialize GraphBuilder and create graph based on selected SDLC phase
+            usecase = user_input.get('selected_usecase')
+            if not usecase:
+                st.error("Error: No use case selected.")
+                return
+
+            graph_builder = GraphBuilder(model)
+            try:
+                graph = graph_builder.setup_graph(usecase)
+                # Display Results on UI
+                DisplayResultStreamlit(usecase, graph, user_message).display_result_on_ui()
+            except Exception as e:
+                st.error(f"Error: Graph setup failed - {e}")
+                return
+
+        except Exception as e:
+            st.error(f"Error Occurred: {e}")
+
+# MAIN EXECUTION
+if __name__ == "__main__":
+    st.title("💡 SDLC Agent")
+    load_langgraph_agenticai_app()

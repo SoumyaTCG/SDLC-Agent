@@ -1,31 +1,15 @@
-from langggraph import State
+from pydantic import BaseModel, Field
+from typing import List
 
-class SDLCState(State):
-    # Requirement Gathering Phase
-    requirement: str = ""
-    feedback: str = ""
-    
-    # User Story Phase
-    user_stories: list = []
-    user_story_feedback: str = ""
-    
-    # Design Phase
-    design_docs: str = ""
-    design_feedback: str = ""
-    
-    # Development Phase
-    code: str = ""
-    code_feedback: str = ""
-    
-    # Testing Phase
-    test_cases: list = []
-    test_results: list = []
-    test_feedback: str = ""
-    
-    # Deployment Phase
-    deployment_status: str = ""
-    deployment_feedback: str = ""
-    
-    # Maintenance Phase
-    maintenance_logs: list = []
-    maintenance_feedback: str = ""
+class SDLCState(BaseModel):
+    """
+    Represents the state for the entire SDLC process using Pydantic BaseModel.
+    """
+    requirement: str = Field(default="", description="Requirements for the project.")
+    feedback: str = Field(default="", description="User feedback for refining user stories.")
+    user_stories: List[str] = Field(default_factory=list, description="List of generated user stories.")
+    design_specification: str = Field(default="", description="Generated design specification.")
+    code: str = Field(default="", description="Generated code.")
+    test_results: str = Field(default="", description="Results from testing.")
+    deployment_status: str = Field(default="", description="Deployment status.")
+
