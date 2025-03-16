@@ -1,12 +1,12 @@
 from langgraph.graph import StateGraph, START, END
 from langchain_core.prompts import ChatPromptTemplate
-from SDLC_Agent.Common_Utility.state import SDLCState
-from SDLC_Agent.Nodes.User_Story import GenerateUserStory
-from SDLC_Agent.Nodes.Design import GenerateDesignSpecification
-from SDLC_Agent.Nodes.Development import GenerateCode
-from SDLC_Agent.Nodes.Testing import RunTests
-from SDLC_Agent.Nodes.Deployment import DeployCode
-from SDLC_Agent.Nodes.Maintenance import MonitorAndMaintain
+from Common_Utility.state import SDLCState
+from Nodes.User_Story.user_story import GenerateUserStory
+from Nodes.Design.design import GenerateDesignSpecification
+from Nodes.Development.development import GenerateCode
+# from Nodes.Testing import RunTests
+# from Nodes.Deployment import DeployCode
+# from Nodes.Maintenance import MonitorAndMaintain
 
 class GraphBuilder:
     """
@@ -47,30 +47,30 @@ class GraphBuilder:
         self.graph_builder.add_node("development", development_node)
         self.graph_builder.add_edge("design", "development")
 
-    def testing_graph(self):
-        """
-        Builds the Testing phase graph.
-        """
-        testing_node = RunTests(self.llm).generate
-        self.graph_builder.add_node("testing", testing_node)
-        self.graph_builder.add_edge("development", "testing")
+    # def testing_graph(self):
+    #     """
+    #     Builds the Testing phase graph.
+    #     """
+    #     testing_node = RunTests(self.llm).generate
+    #     self.graph_builder.add_node("testing", testing_node)
+    #     self.graph_builder.add_edge("development", "testing")
 
-    def deployment_graph(self):
-        """
-        Builds the Deployment phase graph.
-        """
-        deployment_node = DeployCode(self.llm).generate
-        self.graph_builder.add_node("deployment", deployment_node)
-        self.graph_builder.add_edge("testing", "deployment")
+    # def deployment_graph(self):
+    #     """
+    #     Builds the Deployment phase graph.
+    #     """
+    #     deployment_node = DeployCode(self.llm).generate
+    #     self.graph_builder.add_node("deployment", deployment_node)
+    #     self.graph_builder.add_edge("testing", "deployment")
 
-    def maintenance_graph(self):
-        """
-        Builds the Maintenance phase graph.
-        """
-        maintenance_node = MonitorAndMaintain(self.llm).generate
-        self.graph_builder.add_node("maintenance", maintenance_node)
-        self.graph_builder.add_edge("deployment", "maintenance")
-        self.graph_builder.add_edge("maintenance", END)
+    # def maintenance_graph(self):
+    #     """
+    #     Builds the Maintenance phase graph.
+    #     """
+    #     maintenance_node = MonitorAndMaintain(self.llm).generate
+    #     self.graph_builder.add_node("maintenance", maintenance_node)
+    #     self.graph_builder.add_edge("deployment", "maintenance")
+    #     self.graph_builder.add_edge("maintenance", END)
 
     def setup_graph(self, usecase: str):
         """
@@ -85,11 +85,11 @@ class GraphBuilder:
             self.design_graph()
         if usecase == "Development":
             self.development_graph()
-        if usecase == "Testing":
-            self.testing_graph()
-        if usecase == "Deployment":
-            self.deployment_graph()
-        if usecase == "Maintenance":
-            self.maintenance_graph()
+        # if usecase == "Testing":
+        #     self.testing_graph()
+        # if usecase == "Deployment":
+        #     self.deployment_graph()
+        # if usecase == "Maintenance":
+        #     self.maintenance_graph()
 
         return self.graph_builder.compile()

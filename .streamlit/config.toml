@@ -1,0 +1,6 @@
+[theme]
+base="dark"
+primaryColor="#1f77b4"    # Customize primary color
+backgroundColor="#0e1117" # Customize background color
+secondaryBackgroundColor="#1c1e22" # Customize sidebar color
+textColor="#e1e1e1"       # Customize text color
