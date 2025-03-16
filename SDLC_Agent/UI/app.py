@@ -1,8 +1,8 @@
 import streamlit as st
-from SDLC_Agent.Common_Utility.LLM import GroqLLM
-from SDLC_Agent.Graph.builder import GraphBuilder
-from SDLC_Agent.UI.load_ui import LoadStreamlitUI
-from SDLC_Agent.UI.display_results import DisplayResultStreamlit
+from Common_Utility.LLM import GroqLLM
+from Graph.builder import GraphBuilder
+from UI.load_ui import LoadStreamlitUI
+from UI.display_results import DisplayResultStreamlit
 
 def load_langgraph_agenticai_app():
     """

@@ -1,7 +1,7 @@
 import streamlit as st
-from SDLC_Agent.Common_Utility.LLM import GroqLLM
-from SDLC_Agent.Graph.builder import GraphBuilder
-from SDLC_Agent.UI.display_result import DisplayResultStreamlit
+from Common_Utility.LLM import GroqLLM
+from Graph.builder import GraphBuilder
+from UI.display_results import DisplayResultStreamlit
 
 # MAIN Function START
 def load_sdlc_agent():
