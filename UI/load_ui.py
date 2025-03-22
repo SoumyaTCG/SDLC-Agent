@@ -10,17 +10,13 @@ class LoadStreamlitUI:
         Loads the UI components and captures user input.
 
         Returns:
-            dict: User input including API key, model, and selected SDLC phase.
+            dict: User input including API key and selected model.
         """
         st.sidebar.title("SDLC Agent Configuration")
 
         # Initialize session state to retain inputs
-        if "GROQ_API_KEY" not in st.session_state:
-            st.session_state["GROQ_API_KEY"] = ""
-        if "selected_groq_model" not in st.session_state:
-            st.session_state["selected_groq_model"] = "mixtral-8x7b"
-        if "selected_usecase" not in st.session_state:
-            st.session_state["selected_usecase"] = "Requirement Gathering"
+        st.session_state.setdefault("GROQ_API_KEY", "")
+        st.session_state.setdefault("selected_groq_model", "mixtral-8x7b")
 
         # API Key Input
         st.session_state["GROQ_API_KEY"] = st.sidebar.text_input(
@@ -38,21 +34,10 @@ class LoadStreamlitUI:
             index=["mixtral-8x7b", "llama3-8b", "llama3-70b"].index(st.session_state["selected_groq_model"])
         )
 
-        # SDLC Phase Selection
-        st.session_state["selected_usecase"] = st.sidebar.selectbox(
-            "Select SDLC Phase:",
-            ["Requirement Gathering", "Design", "Development", "Testing", "Deployment", "Maintenance"],
-            index=[
-                "Requirement Gathering", "Design", "Development", 
-                "Testing", "Deployment", "Maintenance"
-            ].index(st.session_state["selected_usecase"])
-        )
-
-        # Prepare user input dictionary (return even if some fields are missing)
+        # Prepare user input dictionary
         user_input = {
             "GROQ_API_KEY": st.session_state["GROQ_API_KEY"],
-            "selected_groq_model": st.session_state["selected_groq_model"],
-            "selected_usecase": st.session_state["selected_usecase"]
+            "selected_groq_model": st.session_state["selected_groq_model"]
         }
 
         return user_input

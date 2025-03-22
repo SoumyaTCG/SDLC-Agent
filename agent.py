@@ -3,58 +3,91 @@ from Common_Utility.LLM import GroqLLM
 from Graph.builder import GraphBuilder
 from UI.display_results import DisplayResultStreamlit
 
-# MAIN Function START
+def initialize_ui():
+    """
+    Initializes the Streamlit UI components.
+    
+    Returns:
+        tuple: Groq API key, selected model, and uploaded file.
+    """
+    st.title("SDLC Agent")
+    groq_api_key = st.text_input("Enter Groq API Key:", type="password")
+    selected_groq_model = st.selectbox("Select Groq Model:", ["mixtral-8x7b", "llama3-8b", "llama3-70b"])
+    uploaded_file = st.file_uploader("Upload your SDLC file:", type=["txt", "md", "json", "py", "java", "yaml"])
+    return groq_api_key, selected_groq_model, uploaded_file
+
+def configure_llm(groq_api_key, selected_groq_model):
+    """
+    Configures the LLM model using the provided API key and model selection.
+    
+    Args:
+        groq_api_key (str): The API key for Groq.
+        selected_groq_model (str): The selected Groq model.
+    
+    Returns:
+        object: The initialized LLM model or None if initialization fails.
+    """
+    try:
+        obj_llm_config = GroqLLM({
+            "GROQ_API_KEY": groq_api_key,
+            "selected_groq_model": selected_groq_model
+        })
+        return obj_llm_config.get_llm_model()
+    except Exception as e:
+        st.error(f"Error: Failed to configure LLM - {e}")
+        return None
+
+def process_uploaded_file(uploaded_file):
+    """
+    Processes the uploaded file and returns its content.
+    
+    Args:
+        uploaded_file: The uploaded file object.
+    
+    Returns:
+        str: The content of the uploaded file.
+    """
+    try:
+        return uploaded_file.read().decode("utf-8")
+    except Exception as e:
+        st.error(f"Error: Failed to read uploaded file - {e}")
+        return None
+
+def build_and_display_graph(model, file_content):
+    """
+    Builds the SDLC graph and displays the results on the UI.
+    
+    Args:
+        model: The LLM model.
+        file_content (str): The content of the uploaded file.
+    """
+    try:
+        graph_builder = GraphBuilder(model)
+        graph = graph_builder.setup_graph("Requirement Gathering")  # Example use case
+        DisplayResultStreamlit(graph, file_content).display_result_on_ui()
+    except Exception as e:
+        st.error(f"Error: Graph setup or display failed - {e}")
+
 def load_sdlc_agent():
     """
     Loads and runs the SDLC Agent application with Streamlit UI.
-    This function initializes the UI, handles user input, configures the LLM model,
-    sets up the graph based on the selected SDLC phase, and displays the output 
-    while implementing exception handling for robustness.
     """
-
-    st.title("SDLC Agent")
-
-    # User Input Section
-    groq_api_key = st.text_input("Enter Groq API Key:", type="password")
-    selected_groq_model = st.selectbox("Select Groq Model:", ["mixtral-8x7b", "llama3-8b", "llama3-70b"])
-    selected_usecase = st.selectbox(
-        "Select SDLC Phase:",
-        ["Requirement Gathering", "Design", "Development", "Testing", "Deployment", "Maintenance"]
-    )
+    groq_api_key, selected_groq_model, uploaded_file = initialize_ui()
 
     if not groq_api_key or not selected_groq_model:
         st.warning("Please enter the Groq API key and select a model.")
         return
 
-    # Text input for user message
-    user_message = st.chat_input("Enter your input:")
+    if uploaded_file:
+        file_content = process_uploaded_file(uploaded_file)
+        if not file_content:
+            return
 
-    if user_message:
-        try:
-            # Configure LLM
-            obj_llm_config = GroqLLM({
-                "GROQ_API_KEY": groq_api_key,
-                "selected_groq_model": selected_groq_model
-            })
-            model = obj_llm_config.get_llm_model()
+        model = configure_llm(groq_api_key, selected_groq_model)
+        if not model:
+            return
 
-            if not model:
-                st.error("Error: LLM model could not be initialized.")
-                return
+        build_and_display_graph(model, file_content)
 
-            # Initialize and set up the graph based on use case
-            if not selected_usecase:
-                st.error("Error: No SDLC phase selected.")
-                return
-
-            # Build Graph
-            graph_builder = GraphBuilder(model)
-            try:
-                graph = graph_builder.setup_graph(selected_usecase)
-                DisplayResultStreamlit(selected_usecase, graph, user_message).display_result_on_ui()
-            except Exception as e:
-                st.error(f"Error: Graph setup failed - {e}")
-                return
-
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+if __name__ == "__main__":
+    load_sdlc_agent()

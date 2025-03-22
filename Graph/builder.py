@@ -1,12 +1,10 @@
 from langgraph.graph import StateGraph, START, END
-from langchain_core.prompts import ChatPromptTemplate
 from Common_Utility.state import SDLCState
 from Nodes.User_Story.user_story import GenerateUserStory
 from Nodes.Design.design import GenerateDesignSpecification
 from Nodes.Development.development import GenerateCode
-# from Nodes.Testing import RunTests
-# from Nodes.Deployment import DeployCode
-# from Nodes.Maintenance import MonitorAndMaintain
+from Nodes.Security_Review.security import SecurityReview
+from Nodes.Testing.testing import GenerateTestCases
 
 class GraphBuilder:
     """
@@ -23,16 +21,16 @@ class GraphBuilder:
         self.llm = model
         self.graph_builder = StateGraph(SDLCState)
 
-    def requirement_gathering_graph(self):
+    def user_story_graph(self):
         """
         Builds the Requirement Gathering phase graph.
         """
-        requirement_node = GenerateUserStory(self.llm).generate
-        self.graph_builder.add_node("requirement_gathering", requirement_node)
-        self.graph_builder.add_edge(START, "requirement_gathering")
+        user_story_node = GenerateUserStory(self.llm).generate
+        self.graph_builder.add_node("user_story_generate", user_story_node)
+        self.graph_builder.add_edge(START, "user_story_generate")
 
     def design_graph(self):
-        """
+        """ 
         Builds the Design phase graph.
         """
         design_node = GenerateDesignSpecification(self.llm).generate
@@ -46,31 +44,24 @@ class GraphBuilder:
         development_node = GenerateCode(self.llm).generate
         self.graph_builder.add_node("development", development_node)
         self.graph_builder.add_edge("design", "development")
-
-    # def testing_graph(self):
-    #     """
-    #     Builds the Testing phase graph.
-    #     """
-    #     testing_node = RunTests(self.llm).generate
-    #     self.graph_builder.add_node("testing", testing_node)
-    #     self.graph_builder.add_edge("development", "testing")
-
-    # def deployment_graph(self):
-    #     """
-    #     Builds the Deployment phase graph.
-    #     """
-    #     deployment_node = DeployCode(self.llm).generate
-    #     self.graph_builder.add_node("deployment", deployment_node)
-    #     self.graph_builder.add_edge("testing", "deployment")
-
-    # def maintenance_graph(self):
-    #     """
-    #     Builds the Maintenance phase graph.
-    #     """
-    #     maintenance_node = MonitorAndMaintain(self.llm).generate
-    #     self.graph_builder.add_node("maintenance", maintenance_node)
-    #     self.graph_builder.add_edge("deployment", "maintenance")
-    #     self.graph_builder.add_edge("maintenance", END)
+    
+    def security_review_graph(self):
+        """
+        Builds the Security Review phase graph.
+        """
+        security_review_node = SecurityReview(self.llm).generate
+        self.graph_builder.add_node("security_review", security_review_node)
+        self.graph_builder.add_edge("development", "security_review")
+    
+    def test_cases_graph(self):
+        """
+        Builds the Testing phase graph.
+        """
+        test_cases_node = GenerateTestCases(self.llm).generate_test_cases
+        self.graph_builder.add_node("test_cases_node", test_cases_node)
+        self.graph_builder.add_edge("security_review", "test_cases_node")
+        self.graph_builder.add_edge("test_cases_node", END)
+    
 
     def setup_graph(self, usecase: str):
         """
@@ -81,15 +72,9 @@ class GraphBuilder:
         """
         if usecase == "Requirement Gathering":
             self.requirement_gathering_graph()
-        if usecase == "Design":
+        elif usecase == "Design":
             self.design_graph()
-        if usecase == "Development":
+        elif usecase == "Development":
             self.development_graph()
-        # if usecase == "Testing":
-        #     self.testing_graph()
-        # if usecase == "Deployment":
-        #     self.deployment_graph()
-        # if usecase == "Maintenance":
-        #     self.maintenance_graph()
 
         return self.graph_builder.compile()
