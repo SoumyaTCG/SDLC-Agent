@@ -1,37 +1,50 @@
 from Common_Utility.LLM import GroqLLM
+from Common_Utility.state import SDLCState
 
-class GenerateDesignSpecification:
+class DesignSpecificationGenerator:
     """
-    Handles design specification generation and refinement using the LLM.
+    Class to handle design specification generation using an LLM.
     """
+
     def __init__(self, llm):
+        """
+        Initializes the DesignSpecificationGenerator.
+
+        Args:
+            llm: An instance of the existing LLM module.
+        """
         self.llm = llm
 
-    def generate_design(self, user_stories):
+    def generate_design_specification(self, state: SDLCState) -> SDLCState:
         """
-        Generates design specifications from user stories.
-
-        Args:
-            user_stories (list): List of user stories.
-
-        Returns:
-            str: Generated design specification.
+        Generates a design specification based on user stories and requirements.
         """
-        prompt = f"Generate a design specification based on the following user stories:\n{user_stories}\n\nDesign Specification:"
-        response = self.llm.call_llm(prompt)
-        return response if response else "No design specification generated."
+        print("--GENERATE DESIGN SPECIFICATION--")
+        prompt = f"""Generate a detailed design specification based on these user stories and requirements:\nUser Stories: {state.user_stories}\nRequirements: {state.requirement}.Based on the above, generate a comprehensive design specification that includes:
 
-    def review_design_specification(self, design_specification, feedback):
+        * **System Architecture:** High-level overview of the system's components and their interactions.
+        * **Data Model:** Description of the data entities, attributes, and relationships.
+        * **User Interface:** Wireframes or mockups of the user interface.
+        * **API Design:** Specification of the APIs used for communication between components.
+        * **Security Considerations:** Measures to ensure data security and privacy.
+        * **Performance Requirements:** Expected response times and system throughput.
+
+        Please provide a well-structured and detailed design specification to guide the development process."""  
+        response = self.llm.invoke(prompt)
+        print(response.content)
+        state.design_specification = response.content
+        return state
+
+    def refine_design_specification(self, state: SDLCState) -> SDLCState:
         """
-        Reviews and refines the design specification based on human feedback.
-
-        Args:
-            design_specification (str): The original design specification.
-            feedback (str): Human feedback for refinement.
-
-        Returns:
-            str: The refined design specification.
+        Refines the design specification based on the feedback provided.
         """
-        prompt = f"Refine the following design specification based on this feedback:\n\nDesign Specification:\n{design_specification}\n\nFeedback:\n{feedback}\n\nRefined Design Specification:"
-        refined_spec = self.llm.call_llm(prompt)
-        return refined_spec.strip() if refined_spec else design_specification
+        print("--REFINE DESIGN SPECIFICATION--")
+        prompt = f"""
+        You are a software development expert, tasked with refining design specifications.
+        Here's the current design specification:{state.design_specification}.Here is the feedback received:{state.feedback}
+        """
+        response = self.llm.invoke(prompt)
+        print(response.content)
+        state.design_specification = response.content
+        return state

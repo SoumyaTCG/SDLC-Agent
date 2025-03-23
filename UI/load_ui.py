@@ -16,7 +16,7 @@ class LoadStreamlitUI:
 
         # Initialize session state to retain inputs
         st.session_state.setdefault("GROQ_API_KEY", "")
-        st.session_state.setdefault("selected_groq_model", "mixtral-8x7b")
+        st.session_state.setdefault("selected_groq_model", "gemma2-9b-it")
 
         # API Key Input
         st.session_state["GROQ_API_KEY"] = st.sidebar.text_input(
@@ -26,12 +26,12 @@ class LoadStreamlitUI:
         )
         if not st.session_state["GROQ_API_KEY"]:
             st.sidebar.warning("Groq API Key is required.")
-
+            st.sidebar.markdown("Select a model from the dropdown below:")
         # Model Selection
         st.session_state["selected_groq_model"] = st.sidebar.selectbox(
             "Select Groq Model:",
-            ["mixtral-8x7b", "llama3-8b", "llama3-70b"],
-            index=["mixtral-8x7b", "llama3-8b", "llama3-70b"].index(st.session_state["selected_groq_model"])
+            ["gemma2-9b-it","llama-3.3-70b-versatile"],
+            index=["gemma2-9b-it","llama-3.3-70b-versatile"].index(st.session_state["selected_groq_model"])
         )
 
         # Prepare user input dictionary

@@ -7,9 +7,9 @@ class SDLCState(BaseModel):
     """
     requirement: str = Field(default="", description="Requirements for the project.")
     feedback: str = Field(default="", description="User feedback for refining user stories.")
-    user_stories: List[str] = Field(default_factory=list, description="List of generated user stories.")
+    user_stories: str = Field(default_factory=list, description="Generate user stories.")
     design_specification: str = Field(default="", description="Generated design specification.")
     code: str = Field(default="", description="Generated code.")
-    test_results: str = Field(default="", description="Results from testing.")
+    test_cases: str = Field(default="", description="Generated Test Cases.")
     deployment_status: str = Field(default="", description="Deployment status.")
 

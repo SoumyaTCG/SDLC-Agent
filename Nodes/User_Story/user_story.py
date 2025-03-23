@@ -1,38 +1,43 @@
-from Common_Utility.LLM import GroqLLM
+from Common_Utility.state import SDLCState
 
-class GenerateUserStory:
+
+class UserStoryGenerator:
     """
-    Handles user story generation and refinement using the LLM.
+    Class to handle user story generation and refinement using an LLM.
     """
+
     def __init__(self, llm):
+        """
+        Initializes the UserStoryGenerator.
+
+        Args:
+            llm: An instance of the existing LLM module.
+        """
         self.llm = llm
 
-    def generate(self, requirement):
+    def generate_user_stories(self, state: SDLCState) -> SDLCState:
         """
-        Generates user stories from the provided requirement.
-
-        Args:
-            requirement (str): User-provided requirement.
-
-        Returns:
-            list: List of generated user stories.
+        Generates a user story based on the requirement in the data.
         """
-        prompt = f"Generate user stories based on the following requirement:\n{requirement}\n\nUser Stories:"
-        response = self.llm.call_llm(prompt)
-        user_stories = response.split("\n") if response else []
-        return user_stories
-
-    def review_user_story(self, user_story, feedback):
+        print("--GENERATE USER STORY--") 
+        prompt = f"Generate a single detailed user story for the following requirement: {state.requirement} and that also also without any additional explanations or parts to it."
+        
+        response = self.llm.invoke(prompt)
+        print(response.content)  
+        state.user_stories = response.content  
+        
+        return state
+    
+    def refine_user_story(self, state: SDLCState) -> SDLCState:
         """
-        Reviews and refines the user story based on human feedback.
-
-        Args:
-            user_story (str): The original user story.
-            feedback (str): Human feedback for refinement.
-
-        Returns:
-            str: The refined user story.
+        Refines the user story based on the feedback provided.
         """
-        prompt = f"Refine the following user story based on this feedback:\n\nUser Story:\n{user_story}\n\nFeedback:\n{feedback}\n\nRefined User Story:"
-        refined_story = self.llm.call_llm(prompt)
-        return refined_story.strip() if refined_story else user_story
+        print("--REFINE USER STORY--")
+        prompt = f"""
+        You are a software development expert, tasked with refining user stories.
+        Here's the current user story:{state.user_stories}.Here is the feedback received:{state.feedback}
+        """
+        response = self.llm.invoke(prompt)
+        print(response.content)
+        state.user_stories = response.content
+        return state

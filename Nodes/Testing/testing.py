@@ -1,46 +1,72 @@
 from Common_Utility.LLM import GroqLLM
+from Common_Utility.state import SDLCState
 
 class GenerateTestCases:
     """
-    Handles test case generation using the LLM.
+    Handles test case generation and refinement using the LLM.
     """
+
     def __init__(self, llm):
+        """
+        Initializes the GenerateTestCases class.
+
+        Args:
+            llm: An instance of the existing LLM module.
+        """
         self.llm = llm
 
-    def generate_test_cases(self, security_reviewed_code):
+    def generate_test_cases(self, state: SDLCState) -> SDLCState:
         """
-        Generates test cases from security-reviewed code.
+        Generates initial test cases based on the generated code.
 
         Args:
-            security_reviewed_code (str): The code that has passed security review.
+            state (SDLCState): The current state of the SDLC process.
 
         Returns:
-            str: Generated test cases.
+            SDLCState: The updated SDLCState with the generated test cases.
         """
-        prompt = f"""
-        Generate unit, integration, and security test cases for the following security-reviewed code:
-        {security_reviewed_code}
-        """
-        response = self.llm.call_llm(prompt)
-        return response if response else "No test cases generated."
+        print("--GENERATE TEST CASES--")
 
-    def fix_test_cases(self, test_cases, feedback):
-        """
-        Fixes test cases based on human feedback.
-
-        Args:
-            test_cases (str): The initially generated test cases.
-            feedback (str): Human-provided feedback on test cases.
-
-        Returns:
-            str: Improved test cases.
-        """
-        prompt = f"""
-        Here are some test cases:
-        {test_cases}
+        prompt = f"""Generate a comprehensive set of test cases, including:
         
-        Based on the following feedback, improve the test cases:
-        {feedback}
+        - Unit Tests covering individual functions and methods
+        - Integration Tests ensuring components interact correctly
+        - Security Tests checking for vulnerabilities
+        
+        Ensure the tests follow best practices, use a structured framework, and include assertions.
+        
+        Code for Testing:  
+        {state.code}
         """
-        response = self.llm.call_llm(prompt)
-        return response if response else "No improvements made to test cases."
+
+        response = self.llm.invoke(prompt)
+        print(response.content)
+        state.test_cases = response.content
+        return state
+
+    def refine_test_cases(self, state: SDLCState) -> SDLCState:
+        """
+        Refines the generated test cases for better coverage, efficiency, and best practices.
+
+        Args:
+            state (SDLCState): The current state of the SDLC process.
+
+        Returns:
+            SDLCState: The updated SDLCState with refined test cases.
+        """
+        print("--REFINING TEST CASES--")
+
+        refine_prompt = f"""Improve the following test cases by:
+        
+        - Enhancing coverage for edge cases and boundary conditions
+        - Ensuring clear, well-structured assertions
+        - Avoiding redundant or unnecessary tests
+        - Optimizing test execution time
+        
+        Current Test Cases:  
+        {state.test_cases}
+        """
+
+        response = self.llm.invoke(refine_prompt)
+        state.refined_test_cases = response.content
+        return state
