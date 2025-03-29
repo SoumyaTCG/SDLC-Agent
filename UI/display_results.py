@@ -17,39 +17,92 @@ class DisplayResultStreamlit:
         """
         self.sdlc_graph = sdlc_graph
         self.user_requirement = user_requirement
+        
+    def collect_detailed_feedback(self, phase: str) -> str:
+        """
+        Collects detailed feedback from the user for the given phase.
 
+        Args:
+            phase (str): The current phase (e.g., "user_story_generate", "design").
+
+        Returns:
+            str: The detailed feedback provided by the user.
+        """
+        st.subheader(f"📝 Detailed Feedback for {phase.capitalize()} Phase")
+        detailed_feedback = st.text_area(
+            f"Provide detailed feedback for the {phase} phase:",
+            placeholder="Write your feedback here...",
+            height=150
+        )
+        return detailed_feedback
+    
+   
     def display_result_on_ui(self):
         """
         Displays the output from the SDLC agent on the UI.
         """
+        config = {
+            "configurable": {
+            "thread_id": "1"
+            }
+        }
+        
         with st.spinner("🚀 Generating response..."):
             try:
                 # DEBUG: Check if the graph outputs any updates
-                debug_output = self.sdlc_graph.invoke({'requirement': self.user_requirement})
-                st.write("DEBUG: Full Graph Output", debug_output)
+                # debug_output = self.sdlc_graph.invoke({'requirement': self.user_requirement})
+                # st.write("DEBUG: Full Graph Output", debug_output)
+                #display(Image(self.sdlc_graph.get_graph().draw_mermaid_png()))
 
-                for updates in self.sdlc_graph.stream({'requirement': self.user_requirement}):
+                for updates in self.sdlc_graph.stream({'requirement': self.user_requirement},config=config):
                     st.write("DEBUG: Updates from Graph", updates)  # Debugging line
+                    # Extract actual content inside "user_story_generate"
+                    if "user_story_generate" in updates:
+                        user_story = updates["user_story_generate"]
 
-                if not updates:
-                    return  # Skip empty updates
+                    # Extract and display relevant sections
+                        if user_story.get("user_stories"):
+                            st.subheader("📖 User Story")
+                            st.write(user_story["user_stories"])
+                        
+                    feedback = self.collect_detailed_feedback("user_story_generate")
+                    self.sdlc_graph.update_state({"feedback": {"user_story_generate": feedback}})
 
-                # Extract specific sections
-                if "user_stories" in updates and updates["user_stories"]:
-                    st.subheader("📖 User Story")
-                    st.write(updates["user_stories"])
+                    
+                            
+                    if "design" in updates:
+                        design_specification = updates["design"]
+                        
+                        # Extract and display relevant sections
+                        if design_specification.get("design_specification"):
+                            st.subheader("📐 Design Specification")
+                            st.write(design_specification["design_specification"])
+                    
+                    feedback = self.collect_detailed_feedback("design")
+                    self.sdlc_graph.update_state({"feedback": {"design": feedback}})
 
-                if "design_specification" in updates and updates["design_specification"]:
-                    st.subheader("📐 Design Specification")
-                    st.write(updates["design_specification"])
+                    
+                    if "generate_code" in updates:
+                        development = updates["generate_code"]
+                        
+                        if development.get("code"):
+                            st.subheader("💻 Code")
+                            st.write(development["code"])
+                            
+                        feedback = self.collect_detailed_feedback("generate_code")
+                        self.sdlc_graph.update_state({"feedback": {"generate_code": feedback}})
 
-                if "code" in updates and updates["code"]:
-                    st.subheader("💻 Code")
-                    st.code(updates["code"], language="python")
+                    
+                    if "test_case_generate" in updates:
+                        test_cases = updates["test_case_generate"]
+                        
+                        if test_cases.get("test_cases"):
+                            st.subheader("🧪 Test Cases")
+                            st.write(test_cases["test_cases"])
+                            
+                        feedback = self.collect_detailed_feedback("test_case_generate")
+                        self.sdlc_graph.update_state({"feedback": {"test_case_generate": feedback}})
 
-                if "test_cases" in updates and updates["test_cases"]:
-                    st.subheader("🧪 Test Cases")
-                    st.write(updates["test_cases"])
 
             except Exception as e:
-                st.error(f"❌ An error occurred: {e}")
+                 st.error(f"❌ An error occurred: {e}")
