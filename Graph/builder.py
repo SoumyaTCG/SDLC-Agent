@@ -11,26 +11,6 @@ from langgraph.checkpoint.memory import MemorySaver
 memory = MemorySaver()
 
 
-def route_based_on_feedback(state: SDLCState, current_phase: str) -> str:
-    """
-    Determines the next phase based on feedback by evaluating the current state.
-
-    Args:
-        state (SDLCState): The current state of the SDLC process.
-        current_phase (str): The current phase (e.g., "user_story_generate", "design").
-
-    Returns:
-        str: The evaluation result ("Good" or "Bad") for the current phase.
-    """
-    user_feedback = state.feedback[current_phase]
-    # Evaluate the feedback for the current phase
-    evaluation_result = FeedbackEvaluator.evaluate(state,current_phase,user_feedback)
-
-    # Update the evaluation in the state
-    state.evaluation[current_phase] = evaluation_result
-
-    # Return the evaluation result
-    return evaluation_result
 
 class GraphBuilder:
     """
@@ -48,8 +28,49 @@ class GraphBuilder:
         self.llm = model
         self.user_input = user_input  # Capture user input dynamically
         self.graph_builder = StateGraph(SDLCState)
+        self.evaluator = FeedbackEvaluator(self.llm)
         
+    def route_based_on_feedback(self, state: SDLCState, current_phase: str) -> str:
+        """
+        Determines the next phase based on feedback by evaluating the current state.
+    
+        Args:
+            state (SDLCState): The current state of the SDLC process.
+            current_phase (str): The current phase (e.g., "user_story_generate", "design").
+    
+        Returns:
+            str: The evaluation result ("Good" or "Bad") for the current phase.
+        """
+        # Get the feedback for the current phase from the state
+        feedback_data = state.feedback.get(current_phase, {})
+    
+        # Extract relevant feedback components
+        quick_feedback = feedback_data.get("quick_feedback", "Good")  # Default to "Good"
+        detailed_feedback = feedback_data.get("detailed_feedback", "")
+        rating = feedback_data.get("rating", 5)  # Default to 5
+        missing_requirements = feedback_data.get("missing_requirements", False)
+        inaccurate_info = feedback_data.get("inaccurate_info", False)
+        poor_formatting = feedback_data.get("poor_formatting", False)
 
+        # Combine feedback components into a single string for evaluation
+        combined_feedback = f"""
+        Quick Feedback: {quick_feedback}
+        Detailed Feedback: {detailed_feedback}
+        Rating: {rating}
+        Missing Requirements: {missing_requirements}
+        Inaccurate Info: {inaccurate_info}
+        Poor Formatting: {poor_formatting}
+        """
+
+        # Evaluate the combined feedback using FeedbackEvaluator
+        evaluation_result = self.evaluator.evaluate(state, current_phase, combined_feedback)
+
+        # Update the evaluation in the state
+        state.evaluation[current_phase] = evaluation_result
+
+        # Return the evaluation result
+        return evaluation_result
+    
     def build_sdlc_graph(self):
         """
         Constructs the full SDLC workflow graph.
@@ -119,7 +140,7 @@ class GraphBuilder:
 
         self.graph_builder.add_conditional_edges(
             "user_story_generate",
-            lambda state: route_based_on_feedback(state, "user_story_generate"),
+            lambda state: self.route_based_on_feedback(state, "user_story_generate"),
             {
                 "Good": "design",
                 "Bad": "refine_user_stories"
@@ -128,7 +149,7 @@ class GraphBuilder:
 
         self.graph_builder.add_conditional_edges(
             "refine_user_stories",
-            lambda state: route_based_on_feedback(state, "refine_user_stories"),
+            lambda state: self.route_based_on_feedback(state, "refine_user_stories"),
             {
                 "Good": "design",
                 "Bad": "refine_user_stories"
@@ -137,7 +158,7 @@ class GraphBuilder:
 
         self.graph_builder.add_conditional_edges(
             "design",
-            lambda state: route_based_on_feedback(state, "design"),
+            lambda state: self.route_based_on_feedback(state, "design"),
             {
                 "Good": "generate_code",
                 "Bad": "refine_design_specification"
@@ -146,7 +167,7 @@ class GraphBuilder:
 
         self.graph_builder.add_conditional_edges(
             "refine_design_specification",
-            lambda state: route_based_on_feedback(state, "refine_design_specification"),
+            lambda state: self.route_based_on_feedback(state, "refine_design_specification"),
             {
                 "Good": "generate_code",
                 "Bad": "refine_design_specification"
@@ -155,7 +176,7 @@ class GraphBuilder:
 
         self.graph_builder.add_conditional_edges(
             "generate_code",
-            lambda state: route_based_on_feedback(state, "generate_code"),
+            lambda state: self.route_based_on_feedback(state, "generate_code"),
             {
                 "Good": "test_case_generate",
                 "Bad": "refine_code"
@@ -164,7 +185,7 @@ class GraphBuilder:
 
         self.graph_builder.add_conditional_edges(
             "refine_code",
-            lambda state: route_based_on_feedback(state, "refine_code"),
+            lambda state: self.route_based_on_feedback(state, "refine_code"),
             {
                 "Good": "test_case_generate",
                 "Bad": "refine_code"
@@ -173,7 +194,7 @@ class GraphBuilder:
 
         self.graph_builder.add_conditional_edges(
             "test_case_generate",
-            lambda state: route_based_on_feedback(state, "test_case_generate"),
+            lambda state: self.route_based_on_feedback(state, "test_case_generate"),
             {
                 "Good": END,
                 "Bad": "refine_test_cases"
@@ -182,7 +203,7 @@ class GraphBuilder:
 
         self.graph_builder.add_conditional_edges(
             "refine_test_cases",
-            lambda state: route_based_on_feedback(state, "refine_test_cases"),
+            lambda state: self.route_based_on_feedback(state, "refine_test_cases"),
             {
                 "Good": END,
                 "Bad": "refine_test_cases"

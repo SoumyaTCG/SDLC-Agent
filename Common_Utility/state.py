@@ -13,5 +13,5 @@ class SDLCState(BaseModel):
     code: str = Field(default="", description="Generated code.")
     test_cases: str = Field(default="", description="Generated Test Cases.")
     deployment_status: str = Field(default="", description="Deployment status.")
-    feedback: str= Field(default="", description="Feedback for each Node.")
-    evaluation: str = Field(default="", description="Evaluation of the generated code.")
+    feedback: Dict[str, dict] = Field(default_factory=dict, description="Feedback for each Node.")
+    evaluation: Dict[str, str] = Field(default_factory=dict, description="Evaluation of the generated code.")

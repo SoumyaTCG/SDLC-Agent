@@ -5,6 +5,9 @@ from Graph.builder import GraphBuilder
 from UI.load_ui import LoadStreamlitUI
 from UI.display_results import DisplayResultStreamlit
 
+# Initialize SDLCState
+sdlc_state = SDLCState()
+
 # Initialize session state variables
 if "IsFetchButtonClicked" not in st.session_state:
     st.session_state["IsFetchButtonClicked"] = False
@@ -108,7 +111,7 @@ def load_langgraph_agenticai_app():
             # Display Results
             st.markdown("### 📈 **Results:**")
             st.markdown('<div class="result-box">', unsafe_allow_html=True)
-            DisplayResultStreamlit(graph, user_message).display_result_on_ui()
+            DisplayResultStreamlit(graph, user_message).display_result_on_ui(sdlc_state)
             st.markdown('</div>', unsafe_allow_html=True)
 
         except Exception as e:
