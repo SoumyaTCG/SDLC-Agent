@@ -1,30 +1,63 @@
 from Common_Utility.LLM import GroqLLM
+from Common_Utility.state import SDLCState
 
-class SecurityReview:
+
+class SecurityReviewHandler:
     """
-    Handles security analysis and enhancement of the generated code using the LLM.
+    Handles the security review and refinement of generated code.
     """
+
     def __init__(self, llm):
-        self.llm = llm
-
-    def analyze_security(self, code):
         """
-        Analyzes the security of the given code and identifies potential vulnerabilities.
+        Initializes the SecurityReviewHandler.
 
         Args:
-            code (str): The generated code.
-
-        Returns:
-            str: Security analysis report.
+            llm: An instance of the existing LLM module.
         """
-        prompt = (
-            "Perform a security analysis of the following code. Identify vulnerabilities, "
-            "potential security risks, and suggest mitigations. Ensure best security practices are followed.\n\n"
-            f"Code:\n{code}\n\n"
-            "Provide a structured security report:"
-        )
-        security_report = self.llm.call_llm(prompt)
-        return security_report.strip() if security_report else "No security risks detected."
+        self.llm = llm
 
+    def perform_security_review(self, state: SDLCState) -> SDLCState:
+        """
+        Conducts a security review on the generated code.
+        """
+        print("--PERFORM SECURITY REVIEW--")
+        prompt = f"""
+        You are a security expert analyzing the following code for vulnerabilities:
+        Code:\n{state.code}
 
-        return secure_code.strip() if secure_code else code
+        Provide a detailed security assessment, including:
+        - **Potential security vulnerabilities** (e.g., SQL injection, XSS, hardcoded credentials).
+        - **Mitigation strategies** to resolve the issues.
+        - **Security rating**: High Risk, Medium Risk, Low Risk, Secure.
+        """
+        response = self.llm.invoke(prompt)
+        print(response.content)
+        state.security_review = response.content
+        return state
+
+    def refine_code_based_on_security_review(self, state: SDLCState) -> SDLCState:
+        """
+        Refines the generated code based on security review feedback.
+        """
+        print("--REFINE CODE BASED ON SECURITY REVIEW--")
+        prompt = f"""
+        You are a security-focused software engineer.
+
+        The current code has the following vulnerabilities:
+        {state.security_review}
+
+        Please modify the code to resolve the issues while maintaining its original functionality.
+        Ensure:
+        - Secure input validation
+        - Proper authentication & authorization
+        - No hardcoded secrets
+        - Mitigation of all identified risks
+
+        Here is the original code:
+        {state.code}
+        """
+        response = self.llm.invoke(prompt)
+        print(response.content)
+        state.code = response.content  # Update with secure code
+
+        return state
